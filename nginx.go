@@ -22,8 +22,8 @@ func hexValue(args bson.ObjectId) string {
 
 func appHasAPath(app App) bool {
 	// the app must have a path
-	path := app.Path
-	if len(path) == 0 {
+	paths := app.Paths
+	if len(paths) == 0 {
 		return false
 	}
 	return true

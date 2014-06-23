@@ -28,9 +28,9 @@ type App struct {
 	Id          bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
-	Path        string        `json:"path"`
-	Domains     string        `json:"domains"`
 	Capacity    uint32        `json:"capacity"`
+	Paths       []string      `json:"paths"`
+	Domains     []string      `json:"domains"`
 	Versions    []Version     `json:"versions"`
 	Workers     []Worker      `json:"workers"`
 }

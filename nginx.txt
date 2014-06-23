@@ -64,19 +64,19 @@ http {
         error_page 403  /403.html;
         error_page 502  /502.html;
 		
-		# control
+        # control
         location /control/ {
             proxy_set_header Host $host;
             proxy_pass  http://127.0.0.1:2010;
         }
-{{range .Apps}}{{if and (appHasAPath .) (appHasWorkers .)}}
+{{range .Apps}}{{if (appHasWorkers .)}}{{$appid := .Id}}{{range .Paths}}
         # {{.Name}}
-        location /{{.Path}}/ {
+        location /{{.}}/ {
             proxy_set_header Host $host;
-            proxy_pass http://{{.Id | hex}};
+            proxy_pass http://{{$appid | hex}};
             proxy_set_header X-Forwarded-For $remote_addr;
         }
-{{end}}{{end}}
+{{end}}{{end}}{{end}}
         client_max_body_size 30M;
     }
 {{range .Apps}}{{if and (appHasADomain .) (appHasWorkers .)}}
