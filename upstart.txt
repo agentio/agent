@@ -1,0 +1,18 @@
+{{define "upstart"}}#
+# Agent I/O upstart configuration
+#
+# AUTOMATICALLY GENERATED
+# {{.TIME}}
+#
+start on runlevel [2345]
+setuid control
+chdir {{.CONTROLPATH}}/workers/{{.Worker.Container}}/{{.App.Name}}
+{{if .App.Domains}}env AGENT_DOMAINS='{{.App.Domains}}'
+{{end}}env AGENT_HOST='{{.HOSTNAME}}'
+env AGENT_NAME='{{.App.Name}}'
+env AGENT_PATH='{{.App.Path}}'
+env GOPATH='{{.CONTROLPATH}}/go'
+exec go run {{.App.Name}}.go -p {{.Worker.Port}}
+respawn
+respawn limit 10 90
+{{end}}

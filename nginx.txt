@@ -1,0 +1,101 @@
+{{define "nginx"}}{{$control_path := .CONTROLPATH}}#
+# Agent I/O nginx configuration
+#
+# AUTOMATICALLY GENERATED
+# {{.TIME}}
+#
+worker_processes  8;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    log_format control '$msec|$time_local|$host|$request|$status|$bytes_sent|$request_time|$remote_addr|$http_referer|$http_user_agent|||';
+    access_log {{.CONTROLPATH}}/var/nginx-access.log control;
+    error_log {{.CONTROLPATH}}/var/nginx-error.log debug;
+
+    large_client_header_buffers 4 32k;
+
+    gzip on;
+    gzip_proxied any;
+
+    types_hash_bucket_size 64;
+    types {
+        application/x-mpegURL                   m3u8;
+        video/MP2T                              ts;
+        video/mp4                               mp4;
+        application/xml                         xml;
+        image/gif                               gif;
+        image/jpeg                              jpg;
+        image/png                               png;
+        image/bmp                               bmp;
+        image/x-icon                            ico;
+        text/css                                css;
+        text/html                               html;
+        text/plain                              txt;
+        application/pdf                         pdf;
+        text/xml                                plist;
+        application/octet-stream                dmg;
+        application/octet-stream                ipa;
+        application/octet-stream                mobileprovision;
+        application/x-apple-aspen-config        mobileconfig;
+    }
+    default_type       text/html;
+
+    server_names_hash_bucket_size 64;
+    server_names_hash_max_size 8192;
+{{range .Apps}}{{if (appHasWorkers .)}}
+    # {{.Name}}
+    upstream {{.Id | hex}} { {{range .Workers}}
+	    server 127.0.0.1:{{.Port}};{{end}}    
+	}
+{{end}}{{end}}
+    server {
+        listen          80;
+{{if agentHasSSL}}        listen          443 ssl;
+        ssl_certificate     {{.CONTROLPATH}}/etc/agent.crt;
+        ssl_certificate_key {{.CONTROLPATH}}/etc/agent.key;
+{{end}}
+        server_name     ~^(.*)$;
+        root {{.CONTROLPATH}}/public;
+        try_files $uri.html $uri $uri/ =404;
+        error_page 404  /404.html;
+        error_page 403  /403.html;
+        error_page 502  /502.html;
+		
+		# control
+        location /control/ {
+            proxy_set_header Host $host;
+            proxy_pass  http://127.0.0.1:2010;
+        }
+{{range .Apps}}{{if and (appHasAPath .) (appHasWorkers .)}}
+        # {{.Name}}
+        location /{{.Path}}/ {
+            proxy_set_header Host $host;
+            proxy_pass http://{{.Id | hex}};
+            proxy_set_header X-Forwarded-For $remote_addr;
+        }
+{{end}}{{end}}
+        client_max_body_size 30M;
+    }
+{{range .Apps}}{{if and (appHasADomain .) (appHasWorkers .)}}
+    server {
+        listen          80;
+        server_name     {{.Domains}};
+        root {{$control_path}}/public;
+        try_files $uri.html $uri $uri/ =404;
+        error_page 404  /404.html;
+        error_page 403  /403.html;
+        error_page 502  /502.html;
+        location / {
+            proxy_set_header Host $host;
+            proxy_pass http://{{.Id | hex}};
+            proxy_set_header X-Forwarded-For $remote_addr;
+        }
+        client_max_body_size 10M;
+    }{{end}}{{end}}
+}{{end}}
+
+
+
