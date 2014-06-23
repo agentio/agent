@@ -10,7 +10,7 @@ chdir {{.CONTROLPATH}}/workers/{{.Worker.Container}}/{{.App.Name}}
 {{if .App.Domains}}env AGENT_DOMAINS='{{.App.Domains}}'
 {{end}}env AGENT_HOST='{{.HOSTNAME}}'
 env AGENT_NAME='{{.App.Name}}'
-env AGENT_PATH='{{.App.Path}}'
+env AGENT_PATHS='{{.App.Paths}}'
 env GOPATH='{{.CONTROLPATH}}/go'
 exec go run {{.App.Name}}.go -p {{.Worker.Port}}
 respawn
