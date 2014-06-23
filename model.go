@@ -1,4 +1,4 @@
-package control
+package agent
 
 import (
 	"labix.org/v2/mgo/bson"

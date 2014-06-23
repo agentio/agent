@@ -1,4 +1,4 @@
-package control
+package agent
 
 // Ubuntu-specific configuration
 const ControlPath = "/home/control"

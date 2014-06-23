@@ -1,4 +1,4 @@
-package control
+package agent
 
 import (
 	"code.google.com/p/go-uuid/uuid"
