@@ -356,7 +356,7 @@ var API = []struct {
 	{"/control/apps/{appid}/versions/{versionid}", "DELETE", deleteAppVersionHandler, "delete a version of an app"},
 }
 
-func Main() {
+func ControlAPI() {
 	r := mux.NewRouter()
 	r.HandleFunc("/control/hostname", hostnameHandler).Methods("GET", "POST")
 
