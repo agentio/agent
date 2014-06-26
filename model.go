@@ -34,3 +34,9 @@ type App struct {
 	Versions    []Version     `json:"versions"`
 	Workers     []Worker      `json:"workers"`
 }
+
+type Connection struct {
+        Service     string
+        Credentials string
+}
+
