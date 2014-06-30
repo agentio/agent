@@ -72,10 +72,14 @@ func deleteAllApps() (err error) {
 }
 
 func getApp(appid string, app *App) (err error) {
-	oid := bson.ObjectIdHex(appid)
 	mongoSession := getMongoSession()
 	appsCollection := mongoSession.DB("control").C("apps")
-	return appsCollection.Find(bson.M{"_id": oid}).One(&app)
+        if bson.IsObjectIdHex(appid) {
+		oid := bson.ObjectIdHex(appid)
+		return appsCollection.Find(bson.M{"_id": oid}).One(&app)
+        } else {
+		return appsCollection.Find(bson.M{"name": appid}).One(&app)
+        }
 }
 
 func addAppVersion(
