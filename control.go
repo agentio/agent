@@ -21,7 +21,11 @@ func check(err error) {
 }
 
 func getMongoSession() (mongoSession *mgo.Session) {
-	mongoSession, err := mgo.Dial("127.0.0.1")
+        var dialInfo mgo.DialInfo
+        dialInfo.Addrs = []string{"127.0.0.1"}
+        dialInfo.Username = os.Getenv("MONGODB_USERNAME")
+        dialInfo.Password = os.Getenv("MONGODB_PASSWORD")
+        mongoSession, err := mgo.DialWithInfo(&dialInfo)
 	check(err)
 	mongoSession.SetMode(mgo.Monotonic, true)
 	return mongoSession
