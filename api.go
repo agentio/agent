@@ -241,6 +241,8 @@ func getAppVersionHandler(w http.ResponseWriter, r *http.Request) {
 	versionid := vars["versionid"]
 
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	db := mongoSession.DB("control")
 	file, err := db.GridFS("appfiles").Open(versionid)
 	check(err)

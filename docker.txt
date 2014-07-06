@@ -1,0 +1,41 @@
+{{define "build"}}#!/bin/bash
+docker.io build -t agentio/{{.App.Name}} .
+{{end}}
+
+{{define "run"}}#!/bin/bash
+docker.io run -d -p {{.Worker.Port}}:8080 -w /app/{{.App.Name}} --name={{.App.Name}}-{{.Worker.Port}} agentio/{{.App.Name}} {{.App.Name}}
+{{end}}
+
+{{define "stop"}}#!/bin/bash
+docker.io stop {{.App.Name}}-{{.Worker.Port}} 
+{{end}}
+
+{{define "rm"}}#!/bin/bash
+docker.io rm {{.App.Name}}-{{.Worker.Port}} 
+{{end}}
+
+{{define "Dockerfile"}}
+FROM agentio/base
+
+RUN mkdir /app
+
+ADD {{.App.Name}} /app/{{.App.Name}}
+
+EXPOSE 8080
+CMD []
+
+ENV GOPATH /app/{{.App.Name}}/go
+ENV PATH $GOPATH/bin:$PATH
+ENV AGENT_MONGO_HOST 172.17.42.1
+
+ADD go-build /bin/go-build
+RUN /bin/go-build
+{{end}}
+
+{{define "go-build"}}#!/bin/bash
+set -e
+cd /app/{{.App.Name}}
+#go get {{.App.Name}}
+go install {{.App.Name}}
+{{end}}
+

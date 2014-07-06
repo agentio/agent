@@ -38,21 +38,30 @@ func md5HashWithSalt(input, salt string) string {
 }
 
 func authorizeUser(username string, password string) (user User, err error) {
-	saltedPassword := md5HashWithSalt(password, PasswordSalt)
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
+	saltedPassword := md5HashWithSalt(password, PasswordSalt)
 	usersCollection := mongoSession.DB("accounts").C("users")
 	err = usersCollection.Find(bson.M{"username": username, "password": saltedPassword}).One(&user)
 	return user, err
 }
 
 func getApps(apps *[]App) (err error) {
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	appsCollection := mongoSession.DB("control").C("apps")
 	return appsCollection.Find(nil).All(apps)
 }
 
 func createApp(app map[string]interface{}) (appid bson.ObjectId, err error) {
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	appsCollection := mongoSession.DB("control").C("apps")
 	newId := bson.NewObjectId()
 	app["_id"] = newId
@@ -61,22 +70,31 @@ func createApp(app map[string]interface{}) (appid bson.ObjectId, err error) {
 }
 
 func deleteApp(app App) {
-	oid := app.Id
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
+	oid := app.Id
 	appsCollection := mongoSession.DB("control").C("apps")
 	err := appsCollection.Remove(bson.M{"_id": oid})
 	check(err)
 }
 
 func deleteAllApps() (err error) {
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	appsCollection := mongoSession.DB("control").C("apps")
 	_, err = appsCollection.RemoveAll(bson.M{})
 	return err
 }
 
 func getApp(appid string, app *App) (err error) {
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	appsCollection := mongoSession.DB("control").C("apps")
         if bson.IsObjectIdHex(appid) {
 		oid := bson.ObjectIdHex(appid)
@@ -91,9 +109,11 @@ func addAppVersion(
 	appfilename string,
 	appfiledata []byte) Version {
 
+	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	versionid := string(uuid.New())
 
-	mongoSession := getMongoSession()
 	db := mongoSession.DB("control")
 	file, err := db.GridFS("appfiles").Create(versionid)
 	check(err)
@@ -125,8 +145,11 @@ func addAppVersion(
 }
 
 func getBusyPorts() map[uint32]uint32 {
-	busyPorts := map[uint32]uint32{}
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
+	busyPorts := map[uint32]uint32{}
 	appsCollection := mongoSession.DB("control").C("apps")
 	var apps []App
 	err := appsCollection.Find(nil).All(&apps)
@@ -173,6 +196,9 @@ func deployAppVersion(
 
 	workers := make([]Worker, 0)
 
+	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	// for each worker
 	var i uint32
 	for i = 0; i < app.Capacity; i++ {
@@ -182,7 +208,7 @@ func deployAppVersion(
 		workerpath := fmt.Sprintf("%v/workers/%v", ControlPath, workerid)
 		os.Mkdir(workerpath, os.ModeDir+os.ModePerm)
 		//   extract the version data and write it to the container directory
-		mongoSession := getMongoSession()
+
 		db := mongoSession.DB("control")
 		file, err := db.GridFS("appfiles").Open(versionid)
 		check(err)
@@ -227,16 +253,28 @@ func deployAppVersion(
 		worker.Container = workerid
 		worker.Version = versionid
 
-		// generate the upstart configuration
-		GenerateUpstartConfiguration(app, worker)
+                if (true) {
+			// generate the docker configuration
+			GenerateDockerConfiguration(app, worker)
 
-		// stop the app in case it was already running
-		stopCommand := exec.Command("/sbin/initctl", "stop", fmt.Sprintf("agentio-worker-%v", port))
-		stopCommand.Run()
+			// build the docker image
 
-		// load the upstart configuration to start the app
-		startCommand := exec.Command("/sbin/initctl", "start", fmt.Sprintf("agentio-worker-%v", port))
-		startCommand.Run()
+			// stop any running docker images
+
+			// launch the docker image
+
+                } else {
+			// generate the upstart configuration
+			GenerateUpstartConfiguration(app, worker)
+
+			// stop the app in case it was already running
+			stopCommand := exec.Command("/sbin/initctl", "stop", fmt.Sprintf("agentio-worker-%v", port))
+			stopCommand.Run()
+	
+			// load the upstart configuration to start the app
+			startCommand := exec.Command("/sbin/initctl", "start", fmt.Sprintf("agentio-worker-%v", port))
+			startCommand.Run()
+                }
 
 		// add the worker info to the workers list
 		workers = append(workers, worker)
@@ -246,7 +284,6 @@ func deployAppVersion(
 
 	fmt.Printf("APP: %+v\n", app)
 
-	mongoSession := getMongoSession()
 	appsCollection := mongoSession.DB("control").C("apps")
 	update := map[string]interface{}{"workers": workers}
 	appsCollection.Update(bson.M{"_id": app.Id}, bson.M{"$set": update})
@@ -260,6 +297,8 @@ func deployAppVersion(
 func deleteAppVersions(app App) bool {
 
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	db := mongoSession.DB("control")
 
 	versions := app.Versions
@@ -283,6 +322,8 @@ func deleteAppVersion(
 	versionid string) bool {
 
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	db := mongoSession.DB("control")
 
 	newversions := make([]string, 0)
@@ -346,7 +387,10 @@ func stopApp(app App) bool {
 		workerpath := fmt.Sprintf("%v/workers/%v", ControlPath, workerid)
 		os.RemoveAll(workerpath)
 	}
+
 	mongoSession := getMongoSession()
+        defer mongoSession.Close()
+
 	appsCollection := mongoSession.DB("control").C("apps")
 	update := map[string]interface{}{"workers": make([]Worker, 0)}
 	appsCollection.Update(bson.M{"_id": app.Id}, bson.M{"$set": update})
