@@ -2,7 +2,7 @@
 docker.io build -t agentio/{{.App.Name}} .
 {{end}}
 
-{{define "run"}}#!/bin/bash
+{{define "start"}}#!/bin/bash
 docker.io run -d -p {{.Worker.Port}}:8080 -w /app/{{.App.Name}} --name={{.App.Name}}-{{.Worker.Port}} agentio/{{.App.Name}} {{.App.Name}}
 {{end}}
 

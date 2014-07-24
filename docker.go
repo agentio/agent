@@ -23,7 +23,7 @@ func GenerateDockerConfiguration(app App, worker Worker) {
 		panic(err)
 	}
 
-        filenames := []string{"Dockerfile","run","stop","rm","build","go-build"}
+        filenames := []string{"Dockerfile","start","stop","rm","build","go-build"}
 
         for _,filename := range filenames {
 		var filepath string
