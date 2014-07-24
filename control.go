@@ -257,12 +257,34 @@ func deployAppVersion(
 			// generate the docker configuration
 			GenerateDockerConfiguration(app, worker)
 
-			// build the docker image
+			go func() {
+				workerid := worker.Container
+				workerpath := fmt.Sprintf("%v/workers/%v", ControlPath, workerid)
 
-			// stop any running docker images
+				// build the docker image
+				fmt.Printf("Building image at %v\n", workerpath);
+				buildCommand := exec.Command(workerpath + "/build")
+				buildCommand.Dir = workerpath
+				buildCommand.Run()
 
-			// launch the docker image
+				// stop any running docker images
+				fmt.Printf("Stopping old image at %v\n", workerpath);
+				stopCommand := exec.Command(workerpath + "/stop")
+				stopCommand.Dir = workerpath
+				stopCommand.Run()
 
+				// remove any running docker images
+				fmt.Printf("Removing old image at %v\n", workerpath);
+				rmCommand := exec.Command(workerpath + "/rm")
+				rmCommand.Dir = workerpath
+				rmCommand.Run()
+
+				// launch the docker image
+				fmt.Printf("Starting image at %v\n", workerpath);
+				startCommand := exec.Command(workerpath + "/start")
+				startCommand.Dir = workerpath
+				startCommand.Run()
+			}()
                 } else {
 			// generate the upstart configuration
 			GenerateUpstartConfiguration(app, worker)
@@ -373,18 +395,30 @@ func stopApp(app App) bool {
 		worker := item
 
 		port := worker.Port
-
-		// unload the upstart configuration to stop the app
-		stop := exec.Command("/sbin/initctl", "stop", fmt.Sprintf("agentio-worker-%v", port))
-		stop.Run()
-
 		workerid := worker.Container
-
-		// delete the upstart file
-		RemoveUpstartConfiguration(app, worker)
-
-		// remove the worker container
 		workerpath := fmt.Sprintf("%v/workers/%v", ControlPath, workerid)
+
+		if true {
+			// stop any running docker images
+			fmt.Printf("Stopping old image at %v\n", workerpath);
+			stopCommand := exec.Command(workerpath + "/stop")
+			stopCommand.Dir = workerpath
+			stopCommand.Run()
+
+			// remove any running docker images
+			fmt.Printf("Removing old image at %v\n", workerpath);
+			rmCommand := exec.Command(workerpath + "/rm")
+			rmCommand.Dir = workerpath
+			rmCommand.Run()
+		} else {
+			// unload the upstart configuration to stop the app
+			stop := exec.Command("/sbin/initctl", "stop", fmt.Sprintf("agentio-worker-%v", port))
+			stop.Run()
+
+			// delete the upstart file
+			RemoveUpstartConfiguration(app, worker)
+		}
+		// remove the worker container
 		os.RemoveAll(workerpath)
 	}
 
