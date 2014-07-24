@@ -449,3 +449,10 @@ func stopAppVersion(
 		return false
 	}
 }
+
+func getLogForWorker(workerid string, log *string) (err error) {
+ 	out, err := exec.Command("/usr/bin/docker.io", "logs", workerid).Output()
+	*log = string(out)
+	return nil
+}
+

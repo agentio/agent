@@ -319,6 +319,16 @@ func deleteAppVersionHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// get the logfile for a worker
+func getWorkerLogHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	workerid := vars["workerid"]
+	var log string
+	err := getLogForWorker(workerid, &log)
+	check(err)
+	w.Write([]byte(log))
+}
+
 func hostnameHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := authorize(r)
 	if err != nil {
@@ -356,6 +366,7 @@ var API = []struct {
 	{"/control/apps/{appid}/versions/{versionid}", "GET", getAppVersionHandler, "get a version of an app"},
 	{"/control/apps/{appid}/versions/{versionid}", "POST", postAppVersionHandler, "send a command to a version of an app (start, stop)"},
 	{"/control/apps/{appid}/versions/{versionid}", "DELETE", deleteAppVersionHandler, "delete a version of an app"},
+	{"/control/workers/{workerid}/log", "GET", getWorkerLogHandler, "get logfile for a worker"},
 }
 
 func ControlAPI() {
