@@ -82,7 +82,7 @@ http {
 {{range .Apps}}{{if and (appHasADomain .) (appHasWorkers .)}}
     server {
         listen          80;
-        server_name     {{.Domains}};
+        server_name    {{range .Domains}} {{.}}{{end}};
         root {{$control_path}}/public;
         try_files $uri.html $uri $uri/ =404;
         error_page 404  /404.html;
