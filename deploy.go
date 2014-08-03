@@ -1,3 +1,18 @@
+//
+//  Copyright 2014 Radtastical Inc.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+//
 package agent
 
 import (
@@ -17,11 +32,11 @@ func (c Connection) performRequestIntoBuffer(req *http.Request) (buffer []byte, 
 	req.Header.Add("Authorization", authorization)
 	response, err := client.Do(req)
 	if err != nil {
-		return 
+		return
 	}
 	buffer, err = ioutil.ReadAll(response.Body)
 	if err != nil {
-		return 
+		return
 	}
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
@@ -29,7 +44,7 @@ func (c Connection) performRequestIntoBuffer(req *http.Request) (buffer []byte, 
 		fmt.Println(string(buffer))
 		panic("goodbye")
 	}
-	return 
+	return
 }
 
 func (c Connection) performRequestIntoJSON(result interface{}, req *http.Request) (err error) {
@@ -155,4 +170,17 @@ func (c Connection) StopApp(result *map[string]interface{}, appid string) (err e
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	return c.performRequestIntoJSON(result, req)
+}
+
+func (c Connection) GetLogForWorker(result *string, workerid string) (err error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("%v/control/workers/%v/log", c.Service, workerid), nil)
+	if err != nil {
+		return err
+	}
+	buffer, err := c.performRequestIntoBuffer(req)
+	if err != nil {
+		return err
+	}
+	*result = string(buffer)
+	return nil
 }

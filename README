@@ -1,0 +1,5 @@
+
+The agent management API. Uses docker, mongoDB, and Go to run a sandboxed container for apps.
+
+Released under the Apache License, Version 2.0
+
