@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+        "sort"
 	"strings"
 )
 
@@ -329,6 +330,20 @@ func getWorkerLogHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(log))
 }
 
+func getPortsHandler(w http.ResponseWriter, r *http.Request) {
+ 	busyPorts := getBusyPorts()
+
+	var keys []int
+	for k := range busyPorts {
+    		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+
+	jsonData, err := json.Marshal(keys)
+        check(err)
+        w.Write(jsonData)
+}
+
 func hostnameHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := authorize(r)
 	if err != nil {
@@ -367,6 +382,7 @@ var API = []struct {
 	{"/control/apps/{appid}/versions/{versionid}", "POST", postAppVersionHandler, "send a command to a version of an app (start, stop)"},
 	{"/control/apps/{appid}/versions/{versionid}", "DELETE", deleteAppVersionHandler, "delete a version of an app"},
 	{"/control/workers/{workerid}/log", "GET", getWorkerLogHandler, "get logfile for a worker"},
+	{"/control/ports", "GET", getPortsHandler, "get busy ports"},
 }
 
 func ControlAPI() {
